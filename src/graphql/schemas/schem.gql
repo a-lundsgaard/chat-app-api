@@ -1,0 +1,9 @@
+# https://stackoverflow.com/questions/58904403/unable-to-find-any-graphql-type-definitions-for-the-following-pointers-src
+
+query getAllUsers {
+  getAllUsers {
+    id
+    username
+  }
+}
+
