@@ -14,8 +14,7 @@
 node_modules
 
 # ignore yarn
-.yarn/*
-
+.yarn
 # ignore dist
 dist
 

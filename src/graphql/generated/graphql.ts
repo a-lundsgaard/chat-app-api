@@ -1,4 +1,5 @@
 import { GraphQLResolveInfo } from 'graphql';
+import { ContextManager } from '../context/index';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -32,24 +33,18 @@ export type Message = {
   username?: Maybe<Scalars['String']>;
 };
 
-/**
- * The entry-point for mutations.
- * This acts as the top-level api from which all mutations must start
- */
+/** MUTATIONS */
 export type Mutation = {
   __typename?: 'Mutation';
   addMessage: Message;
   createConversation: Conversation;
-  login?: Maybe<Scalars['String']>;
+  login: UserLoginResponse;
   registerUser: User;
   root?: Maybe<Scalars['String']>;
 };
 
 
-/**
- * The entry-point for mutations.
- * This acts as the top-level api from which all mutations must start
- */
+/** MUTATIONS */
 export type MutationAddMessageArgs = {
   content: Scalars['String'];
   conversation_id: Scalars['ID'];
@@ -57,40 +52,25 @@ export type MutationAddMessageArgs = {
 };
 
 
-/**
- * The entry-point for mutations.
- * This acts as the top-level api from which all mutations must start
- */
+/** MUTATIONS */
 export type MutationCreateConversationArgs = {
   name: Scalars['String'];
   owner_id: Scalars['Int'];
 };
 
 
-/**
- * The entry-point for mutations.
- * This acts as the top-level api from which all mutations must start
- */
+/** MUTATIONS */
 export type MutationLoginArgs = {
-  password: Scalars['String'];
-  username: Scalars['String'];
+  input: UserLoginInput;
 };
 
 
-/**
- * The entry-point for mutations.
- * This acts as the top-level api from which all mutations must start
- */
+/** MUTATIONS */
 export type MutationRegisterUserArgs = {
-  email: Scalars['String'];
-  password: Scalars['String'];
-  username: Scalars['String'];
+  input: UserRegisterInput;
 };
 
-/**
- * The entry-point for queries.
- * This acts as the top-level api from which all queries must start
- */
+/** QUERIES */
 export type Query = {
   __typename?: 'Query';
   getAllConversationsByUserId: Array<Conversation>;
@@ -98,41 +78,30 @@ export type Query = {
   getConversationMessages?: Maybe<Array<Maybe<Message>>>;
   getMessagesByConversationIdWithUser?: Maybe<Array<Maybe<Message>>>;
   getMessagesFromConversation: Array<Message>;
+  isMe?: Maybe<UserResponsObject>;
   root?: Maybe<Scalars['String']>;
 };
 
 
-/**
- * The entry-point for queries.
- * This acts as the top-level api from which all queries must start
- */
+/** QUERIES */
 export type QueryGetAllConversationsByUserIdArgs = {
   user_id: Scalars['Int'];
 };
 
 
-/**
- * The entry-point for queries.
- * This acts as the top-level api from which all queries must start
- */
+/** QUERIES */
 export type QueryGetConversationMessagesArgs = {
   id: Scalars['ID'];
 };
 
 
-/**
- * The entry-point for queries.
- * This acts as the top-level api from which all queries must start
- */
+/** QUERIES */
 export type QueryGetMessagesByConversationIdWithUserArgs = {
   id: Scalars['ID'];
 };
 
 
-/**
- * The entry-point for queries.
- * This acts as the top-level api from which all queries must start
- */
+/** QUERIES */
 export type QueryGetMessagesFromConversationArgs = {
   conversation_id: Scalars['ID'];
 };
@@ -149,6 +118,32 @@ export type User = {
   email: Scalars['String'];
   id: Scalars['Int'];
   password: Scalars['String'];
+  username: Scalars['String'];
+};
+
+export type UserLoginInput = {
+  email: Scalars['String'];
+  password: Scalars['String'];
+};
+
+/** The response for when a user is successfully logged in */
+export type UserLoginResponse = {
+  __typename?: 'UserLoginResponse';
+  token: Scalars['String'];
+  user?: Maybe<UserResponsObject>;
+};
+
+/** Inputs */
+export type UserRegisterInput = {
+  email: Scalars['String'];
+  password: Scalars['String'];
+  username: Scalars['String'];
+};
+
+export type UserResponsObject = {
+  __typename?: 'UserResponsObject';
+  email: Scalars['String'];
+  isLoggedIn?: Maybe<Scalars['Boolean']>;
   username: Scalars['String'];
 };
 
@@ -233,6 +228,10 @@ export type ResolversTypes = {
   String: ResolverTypeWrapper<Scalars['String']>;
   Subscription: ResolverTypeWrapper<{}>;
   User: ResolverTypeWrapper<User>;
+  UserLoginInput: UserLoginInput;
+  UserLoginResponse: ResolverTypeWrapper<UserLoginResponse>;
+  UserRegisterInput: UserRegisterInput;
+  UserResponsObject: ResolverTypeWrapper<UserResponsObject>;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -247,9 +246,13 @@ export type ResolversParentTypes = {
   String: Scalars['String'];
   Subscription: {};
   User: User;
+  UserLoginInput: UserLoginInput;
+  UserLoginResponse: UserLoginResponse;
+  UserRegisterInput: UserRegisterInput;
+  UserResponsObject: UserResponsObject;
 };
 
-export type ConversationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Conversation'] = ResolversParentTypes['Conversation']> = {
+export type ConversationResolvers<ContextType = ContextManager, ParentType extends ResolversParentTypes['Conversation'] = ResolversParentTypes['Conversation']> = {
   created_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -257,7 +260,7 @@ export type ConversationResolvers<ContextType = any, ParentType extends Resolver
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type MessageResolvers<ContextType = any, ParentType extends ResolversParentTypes['Message'] = ResolversParentTypes['Message']> = {
+export type MessageResolvers<ContextType = ContextManager, ParentType extends ResolversParentTypes['Message'] = ResolversParentTypes['Message']> = {
   content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   conversation_id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   created_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -267,29 +270,30 @@ export type MessageResolvers<ContextType = any, ParentType extends ResolversPare
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type MutationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
+export type MutationResolvers<ContextType = ContextManager, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   addMessage?: Resolver<ResolversTypes['Message'], ParentType, ContextType, RequireFields<MutationAddMessageArgs, 'content' | 'conversation_id' | 'user_id'>>;
   createConversation?: Resolver<ResolversTypes['Conversation'], ParentType, ContextType, RequireFields<MutationCreateConversationArgs, 'name' | 'owner_id'>>;
-  login?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<MutationLoginArgs, 'password' | 'username'>>;
-  registerUser?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<MutationRegisterUserArgs, 'email' | 'password' | 'username'>>;
+  login?: Resolver<ResolversTypes['UserLoginResponse'], ParentType, ContextType, RequireFields<MutationLoginArgs, 'input'>>;
+  registerUser?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<MutationRegisterUserArgs, 'input'>>;
   root?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
-export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
+export type QueryResolvers<ContextType = ContextManager, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   getAllConversationsByUserId?: Resolver<Array<ResolversTypes['Conversation']>, ParentType, ContextType, RequireFields<QueryGetAllConversationsByUserIdArgs, 'user_id'>>;
   getAllUsers?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
   getConversationMessages?: Resolver<Maybe<Array<Maybe<ResolversTypes['Message']>>>, ParentType, ContextType, RequireFields<QueryGetConversationMessagesArgs, 'id'>>;
   getMessagesByConversationIdWithUser?: Resolver<Maybe<Array<Maybe<ResolversTypes['Message']>>>, ParentType, ContextType, RequireFields<QueryGetMessagesByConversationIdWithUserArgs, 'id'>>;
   getMessagesFromConversation?: Resolver<Array<ResolversTypes['Message']>, ParentType, ContextType, RequireFields<QueryGetMessagesFromConversationArgs, 'conversation_id'>>;
+  isMe?: Resolver<Maybe<ResolversTypes['UserResponsObject']>, ParentType, ContextType>;
   root?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
-export type SubscriptionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = {
+export type SubscriptionResolvers<ContextType = ContextManager, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = {
   messageCreated?: SubscriptionResolver<Maybe<ResolversTypes['Message']>, "messageCreated", ParentType, ContextType>;
   root?: SubscriptionResolver<Maybe<ResolversTypes['String']>, "root", ParentType, ContextType>;
 };
 
-export type UserResolvers<ContextType = any, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
+export type UserResolvers<ContextType = ContextManager, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
   created_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -298,12 +302,27 @@ export type UserResolvers<ContextType = any, ParentType extends ResolversParentT
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type Resolvers<ContextType = any> = {
+export type UserLoginResponseResolvers<ContextType = ContextManager, ParentType extends ResolversParentTypes['UserLoginResponse'] = ResolversParentTypes['UserLoginResponse']> = {
+  token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  user?: Resolver<Maybe<ResolversTypes['UserResponsObject']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type UserResponsObjectResolvers<ContextType = ContextManager, ParentType extends ResolversParentTypes['UserResponsObject'] = ResolversParentTypes['UserResponsObject']> = {
+  email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  isLoggedIn?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  username?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type Resolvers<ContextType = ContextManager> = {
   Conversation?: ConversationResolvers<ContextType>;
   Message?: MessageResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
+  UserLoginResponse?: UserLoginResponseResolvers<ContextType>;
+  UserResponsObject?: UserResponsObjectResolvers<ContextType>;
 };
 

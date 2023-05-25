@@ -2,6 +2,7 @@ import { Controller } from "./controller";
 import { User } from "../../graphql/generated/graphql";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { GraphQLError } from "graphql";
 
 interface RegisterUser {
     username: string;
@@ -13,6 +14,11 @@ class UserController extends Controller {
     async getAllUsers() {
         const rows = await this.query<User>('SELECT * FROM users');
         return rows;
+    }
+
+    async find(email: string): Promise<User | undefined> {
+        const user = await this.query<User>('SELECT * FROM users WHERE email = $1', [email]);
+        return user[0];
     }
 
     async registerUser({ username, password, email }: RegisterUser) {
