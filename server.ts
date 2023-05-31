@@ -6,46 +6,16 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-
-
-
-import { parseCookies, setCookie, } from 'nookies';
-
-
 // sockets
 import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
 import { makeExecutableSchema } from '@graphql-tools/schema';
-
-
 import typeDefs from './src/graphql/schemas/index';
 import resolvers from './src/graphql/resolvers/index';
 import authMiddleware from './src/middleware/auth';
 // import getUser from './src/utils/getUser';
 import { getUser } from './src/middleware/auth';
-import { GraphQLError, subscribe } from 'graphql';
-
 import context, { ContextManager } from './src/graphql/context/index';
-import Cookies from 'cookies';
-
-
-// interface MyContext {
-//     // token?: String;
-// }
-
-// interface MyContext {
-//     auth?: {
-//         user: string;
-//         token: string;
-//     };
-// }
-
-// interface MyContext { signIn: () => string, authenticate: () => boolean }
-
-// const wsLink = new GraphQLWsLink(createClient({
-//     url: 'ws://localhost:4000/subscriptions',
-// }));
-
 
 
 const startServer = async () => {
@@ -56,28 +26,7 @@ const startServer = async () => {
     // enabling our servers to shut down gracefully.
     const httpServer = http.createServer(app);
     const ctxManager = new ContextManager();
-
-
-    // const ctxManager = new contextManager();
-
-    // Same ApolloServer initialization as before, plus the drain plugin
-    // for our httpServer.
-
     const schema = makeExecutableSchema({ typeDefs, resolvers });
-
-
-    const getDynamicContext = async (ctx, msg, args) => {
-        // if (ctx.connectionParams.authentication) {
-        //   const currentUser = await findUser(ctx.connectionParams.authentication);
-        //   return { currentUser };
-        // }
-
-        // console.log("SERVER CTX", ctx, args, msg);
-        // Let the resolvers know we don't have a current user so they can
-        // throw the appropriate error
-        return { currentUser: null };
-    };
-
 
     // Creating the WebSocket server
     const wsServer = new WebSocketServer({
@@ -135,20 +84,9 @@ const startServer = async () => {
     // Ensure we wait for our server to start
     await server.start();
 
-
-
-
-
     // Set up our Express middleware to handle CORS, body parsing,
     // and our expressMiddleware function.
     // app.use(authMiddleware);
-
-    // enable cors
-    var corsOptions = {
-        origin: '<insert uri of front-end domain>',
-        credentials: true // <-- REQUIRED backend setting
-    };
-
     app.use(
         '/',
         // cors<cors.CorsRequest>(),
@@ -165,26 +103,8 @@ const startServer = async () => {
         expressMiddleware(server, {
             context: async ({ req, res }) => {
                 return new ContextManager(req);
-            },
-
-            // context: async ({ req, res }) => {
-            //     // check cookie
-            //     // const token = req.cookies;
-            //     // context.initialize(req, res);
-            //     // return new ContextManager(req, res);
-
-            //     return {
-            //         cookie: res.cookie,
-            //         // authenticate: ContextManager.verifyToken(req),
-            //     }
-            // }
-
-
-        },
-
-
-
-        ),
+            }
+        })
     );
 
     // Modified server startup
@@ -193,7 +113,5 @@ const startServer = async () => {
 
 
 };
-
-
 
 startServer();

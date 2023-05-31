@@ -1,11 +1,11 @@
 # Use the official Node.js image as the base image
-FROM node:16
+FROM node:latest
 
 # Set the working directory inside the container
 WORKDIR /app
 
 # Copy package.json and yarn.lock to the container
-COPY package.json yarn.lock ./
+COPY package.json ./
 
 # Install project dependencies using yarn
 RUN yarn install

@@ -8,15 +8,15 @@ const { MESSAGE_CREATED } = mc.events;
 const messageResolver: Resolvers = {
     Query: {
         getMessagesFromConversation: async (_, args, context) => {
+            context.authenticate();
             return await mc.getMessagesByConversationId(args.conversation_id);
         }
     },
     Mutation: {
         addMessage: async (_, { input }, context) => {
-            // console.log('msg', args);   
             const user = context.authenticate();
-            const args = input;
 
+            const args = input;
             const msg: MessageInput = {
                 user_id: args.user_id,
                 content: args.content,
@@ -29,8 +29,6 @@ const messageResolver: Resolvers = {
                 // user?.id != args.user_id &&
                 args.receiver_ids.includes(user?.id as number)
             ) {
-                console.log('publishing message: ', args.receiver_ids, typeof user?.id, user?.id);
-                console.log('publishing message: ', typeof user?.id, typeof args.user_id)
                 mc.pubsub.publish(MESSAGE_CREATED, {
                     'messageCreated': msg
                 });
