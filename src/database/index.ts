@@ -9,6 +9,7 @@ const pool = new Pool({
     database: env.DB_USERNAME,
     password: env.DB_PASSWORD,
     port: 5432,
+    max: 5,
 });
 
 pool.on('connect', () => {
@@ -18,6 +19,12 @@ pool.on('connect', () => {
 pool.on('error', (error: unknown) => {
     console.error('Error connecting to the PostgreSQL database:', error);
 });
+
+pool.on('remove', () => {
+    console.log('Client removed');
+});
+
+
 
 
 export default pool;

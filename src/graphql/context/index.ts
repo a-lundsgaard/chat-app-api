@@ -28,95 +28,51 @@ export class ContextManager {
     private readonly _UNAUTHORIZED_USER_MESSAGE = "Invalid Key";
     // cookie: any ;
     // set type to cookie helper
-    setCookie: Response['cookie'];
-    req: Request;
-    res: Response;
+    // setCookie: Response['cookie'];
+    req?: Request;
+    // res: Response;
     isMe: boolean = false;
 
-    constructor(req: Request, res: Response) {
-        this.setCookie = res.cookie;
+    constructor(req?: Request) {
+        // this.setCookie = res.cookie;
         this.req = req;
-        this.res = res;
+        // this.res = res;
     }
 
-    verifyToken(): UserResponsObject | null {
+    verifyToken(token?: string): UserResponsObject | null {
         try {
-            // let _CURRENT_TOKEN = this.getToken();
-
-            // console.log("cookie obj: ", req.cookies);
-
-            // const cookies = parse(this.req.headers.cookie || '');
-            // const session = cookies.session || '';
-
-            console.log("cookie obj: ", this.req.headers.cookie);
-
-            const cookies = parseCookies({ req: this.req });
-            const session = cookies["auth-token"] || '';
-
-            console.log("session: ", cookies, session);
-
-
-            // const { session } = this.req.cookies;
+            // if (!this.req || !token) throw new Error("from ctx manager Missing token or request object");
+            console.log("Å CTX: ", this.req, token);
+            const session = token ? token : (this.req?.headers['auth-token'] || '') as string
             if (!session) throw new JsonWebTokenError("Missing JWT Token");
 
-            const { key, user } = jwt.verify(session, this._TOKEN_SECRET!) as JWTData;
+            const { user, key } = jwt.verify(session, this._TOKEN_SECRET!) as JWTData;
+
+            console.log("å user: ", user);
             const isValidKey = bcrypt.compareSync(this._TOKEN_SECRET_VERIFICATION_KEY!, key);
+
             if (!isValidKey) {
                 throw new GraphQLError(this._UNAUTHORIZED_USER_MESSAGE);
             }
-            // this._TOKEN = this.setToken(null);
-
-            // return isValidKey;
-            console.log("isValid", isValidKey);
             return user;
-        } catch (error) {
-            throw error;
+        } catch (error: unknown) {
+            console.error("error: ", error);
+            throw new GraphQLError((error as Error).message);
         }
     }
 
-    // private setToken(token: string | null): string | null {
-    //     this._TOKEN = token;
-    //     return token;
-    // }
-
-    // private getToken(): string | null {
-    //     return this._TOKEN;
-    // }
-
     private signToken(user: UserResponsObject): string {
         const key = bcrypt.hashSync(this._TOKEN_SECRET_VERIFICATION_KEY!, 10);
-
         const obj: JWTData = {
             key: key,
             user: { ...user, isLoggedIn: true },
         };
 
-        const token = jwt.sign({ data: obj }, this._TOKEN_SECRET!, {
+        const token = jwt.sign(obj, this._TOKEN_SECRET!, {
             expiresIn: this._TOKEN_EXPIRATION,
         });
-
-        // setCookie({ res }, 'session', token, {
-        //     httpOnly: true,
-        //     // secure: true, // Enable this if using HTTPS e.g. in production
-        //     path: '/', // The path: '/' means that the cookie will be valid for the entire domain. It will be sent by the client to the server for any URL path within the domain.
-        // });
-
         return token;
 
-    }
-
-    public initialize(req: Request, res: Response) {
-
-        console.log("cookie obj: ", req.cookies);
-
-        // const cookies = parse(req.cookies || '');
-        // const loginToken = cookies.session || '';
-        // console.log("loginToken", cookies);
-        // this._TOKEN = this.setToken(loginToken || null);
-        // this.cookie = res.cookie;
-
-        // const cookie = res.cookie;
-        // return this;
     }
 
     public signIn(user: UserResponsObject): string {

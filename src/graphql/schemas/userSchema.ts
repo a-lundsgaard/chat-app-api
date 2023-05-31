@@ -28,6 +28,12 @@ export default gql`
         getAllUsers: [User!]!
     }
 
+
+# make query that searches for users by username
+    type Query {
+        getUsersByUsername(username: String!): [User!]
+    }
+
     type Query {
         isMe: UserResponsObject
     }
@@ -41,6 +47,7 @@ export default gql`
     }
 
     type UserResponsObject {
+        id: Int!
         username: String!
         email: String!
         isLoggedIn: Boolean

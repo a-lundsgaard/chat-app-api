@@ -19,8 +19,15 @@ export type Conversation = {
   __typename?: 'Conversation';
   created_at: Scalars['String'];
   id: Scalars['ID'];
-  name: Scalars['String'];
+  name?: Maybe<Scalars['String']>;
   owner_id: Scalars['Int'];
+  participantIds: Array<Scalars['Int']>;
+};
+
+export type ConversationInput = {
+  name?: InputMaybe<Scalars['String']>;
+  owner_id: Scalars['Int'];
+  participantIds: Array<Scalars['Int']>;
 };
 
 export type Message = {
@@ -31,6 +38,14 @@ export type Message = {
   id: Scalars['Int'];
   user_id: Scalars['Int'];
   username?: Maybe<Scalars['String']>;
+};
+
+export type MessageInput = {
+  content: Scalars['String'];
+  conversation_id: Scalars['ID'];
+  receiver_ids: Array<Scalars['Int']>;
+  user_id: Scalars['Int'];
+  username: Scalars['String'];
 };
 
 /** MUTATIONS */
@@ -46,16 +61,13 @@ export type Mutation = {
 
 /** MUTATIONS */
 export type MutationAddMessageArgs = {
-  content: Scalars['String'];
-  conversation_id: Scalars['ID'];
-  user_id: Scalars['Int'];
+  input: MessageInput;
 };
 
 
 /** MUTATIONS */
 export type MutationCreateConversationArgs = {
-  name: Scalars['String'];
-  owner_id: Scalars['Int'];
+  input: ConversationInput;
 };
 
 
@@ -78,6 +90,7 @@ export type Query = {
   getConversationMessages?: Maybe<Array<Maybe<Message>>>;
   getMessagesByConversationIdWithUser?: Maybe<Array<Maybe<Message>>>;
   getMessagesFromConversation: Array<Message>;
+  getUsersByUsername?: Maybe<Array<User>>;
   isMe?: Maybe<UserResponsObject>;
   root?: Maybe<Scalars['String']>;
 };
@@ -106,8 +119,16 @@ export type QueryGetMessagesFromConversationArgs = {
   conversation_id: Scalars['ID'];
 };
 
+
+/** QUERIES */
+export type QueryGetUsersByUsernameArgs = {
+  username: Scalars['String'];
+};
+
 export type Subscription = {
   __typename?: 'Subscription';
+  conversationCreated?: Maybe<Message>;
+  conversationMessageAdded?: Maybe<Message>;
   messageCreated?: Maybe<Message>;
   root?: Maybe<Scalars['String']>;
 };
@@ -143,6 +164,7 @@ export type UserRegisterInput = {
 export type UserResponsObject = {
   __typename?: 'UserResponsObject';
   email: Scalars['String'];
+  id: Scalars['Int'];
   isLoggedIn?: Maybe<Scalars['Boolean']>;
   username: Scalars['String'];
 };
@@ -220,9 +242,11 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 export type ResolversTypes = {
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   Conversation: ResolverTypeWrapper<Conversation>;
+  ConversationInput: ConversationInput;
   ID: ResolverTypeWrapper<Scalars['ID']>;
   Int: ResolverTypeWrapper<Scalars['Int']>;
   Message: ResolverTypeWrapper<Message>;
+  MessageInput: MessageInput;
   Mutation: ResolverTypeWrapper<{}>;
   Query: ResolverTypeWrapper<{}>;
   String: ResolverTypeWrapper<Scalars['String']>;
@@ -238,9 +262,11 @@ export type ResolversTypes = {
 export type ResolversParentTypes = {
   Boolean: Scalars['Boolean'];
   Conversation: Conversation;
+  ConversationInput: ConversationInput;
   ID: Scalars['ID'];
   Int: Scalars['Int'];
   Message: Message;
+  MessageInput: MessageInput;
   Mutation: {};
   Query: {};
   String: Scalars['String'];
@@ -255,8 +281,9 @@ export type ResolversParentTypes = {
 export type ConversationResolvers<ContextType = ContextManager, ParentType extends ResolversParentTypes['Conversation'] = ResolversParentTypes['Conversation']> = {
   created_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   owner_id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  participantIds?: Resolver<Array<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -271,8 +298,8 @@ export type MessageResolvers<ContextType = ContextManager, ParentType extends Re
 };
 
 export type MutationResolvers<ContextType = ContextManager, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
-  addMessage?: Resolver<ResolversTypes['Message'], ParentType, ContextType, RequireFields<MutationAddMessageArgs, 'content' | 'conversation_id' | 'user_id'>>;
-  createConversation?: Resolver<ResolversTypes['Conversation'], ParentType, ContextType, RequireFields<MutationCreateConversationArgs, 'name' | 'owner_id'>>;
+  addMessage?: Resolver<ResolversTypes['Message'], ParentType, ContextType, RequireFields<MutationAddMessageArgs, 'input'>>;
+  createConversation?: Resolver<ResolversTypes['Conversation'], ParentType, ContextType, RequireFields<MutationCreateConversationArgs, 'input'>>;
   login?: Resolver<ResolversTypes['UserLoginResponse'], ParentType, ContextType, RequireFields<MutationLoginArgs, 'input'>>;
   registerUser?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<MutationRegisterUserArgs, 'input'>>;
   root?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -284,11 +311,14 @@ export type QueryResolvers<ContextType = ContextManager, ParentType extends Reso
   getConversationMessages?: Resolver<Maybe<Array<Maybe<ResolversTypes['Message']>>>, ParentType, ContextType, RequireFields<QueryGetConversationMessagesArgs, 'id'>>;
   getMessagesByConversationIdWithUser?: Resolver<Maybe<Array<Maybe<ResolversTypes['Message']>>>, ParentType, ContextType, RequireFields<QueryGetMessagesByConversationIdWithUserArgs, 'id'>>;
   getMessagesFromConversation?: Resolver<Array<ResolversTypes['Message']>, ParentType, ContextType, RequireFields<QueryGetMessagesFromConversationArgs, 'conversation_id'>>;
+  getUsersByUsername?: Resolver<Maybe<Array<ResolversTypes['User']>>, ParentType, ContextType, RequireFields<QueryGetUsersByUsernameArgs, 'username'>>;
   isMe?: Resolver<Maybe<ResolversTypes['UserResponsObject']>, ParentType, ContextType>;
   root?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
 export type SubscriptionResolvers<ContextType = ContextManager, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = {
+  conversationCreated?: SubscriptionResolver<Maybe<ResolversTypes['Message']>, "conversationCreated", ParentType, ContextType>;
+  conversationMessageAdded?: SubscriptionResolver<Maybe<ResolversTypes['Message']>, "conversationMessageAdded", ParentType, ContextType>;
   messageCreated?: SubscriptionResolver<Maybe<ResolversTypes['Message']>, "messageCreated", ParentType, ContextType>;
   root?: SubscriptionResolver<Maybe<ResolversTypes['String']>, "root", ParentType, ContextType>;
 };
@@ -310,6 +340,7 @@ export type UserLoginResponseResolvers<ContextType = ContextManager, ParentType 
 
 export type UserResponsObjectResolvers<ContextType = ContextManager, ParentType extends ResolversParentTypes['UserResponsObject'] = ResolversParentTypes['UserResponsObject']> = {
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   isLoggedIn?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   username?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

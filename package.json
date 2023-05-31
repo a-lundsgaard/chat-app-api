@@ -3,7 +3,7 @@
   "packageManager": "yarn@3.2.2",
   "scripts": {
     "mac:copy:sql": "cd ./dist/src/database && mkdir -p sql && cd .. && cd .. && cd .. && cp -R ./src/database/sql ./dist/src/database",
-    "dev": "nodemon ./dist/server.js",
+    "dev": "yarn mac:copy:sql && nodemon ./dist/server.js",
     "dev-concurrent": "concurrently \"yarn dev\" \"npx tsc --watch\"  \"node ./dist/watcher\" -k",
     "create-tables": "node ./dist/src/database/actions/setupdb.js",
     "start": "node dist/server.js",
@@ -20,6 +20,7 @@
     "bcrypt": "^5.1.0",
     "body-parser": "^1.20.2",
     "cookie": "^0.5.0",
+    "cookies": "^0.8.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
@@ -40,6 +41,7 @@
     "@graphql-codegen/typescript-resolvers": "3.2.1",
     "@types/bcrypt": "^5.0.0",
     "@types/cookie": "^0.5.1",
+    "@types/cookies": "^0.7.7",
     "@types/jsonwebtoken": "^9.0.2",
     "concurrently": "^8.0.1"
   }

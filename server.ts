@@ -11,6 +11,7 @@ import bodyParser from 'body-parser';
 
 import { parseCookies, setCookie, } from 'nookies';
 
+
 // sockets
 import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
@@ -22,9 +23,10 @@ import resolvers from './src/graphql/resolvers/index';
 import authMiddleware from './src/middleware/auth';
 // import getUser from './src/utils/getUser';
 import { getUser } from './src/middleware/auth';
-import { GraphQLError } from 'graphql';
+import { GraphQLError, subscribe } from 'graphql';
 
 import context, { ContextManager } from './src/graphql/context/index';
+import Cookies from 'cookies';
 
 
 // interface MyContext {
@@ -53,11 +55,29 @@ const startServer = async () => {
     // Below, we tell Apollo Server to "drain" this httpServer,
     // enabling our servers to shut down gracefully.
     const httpServer = http.createServer(app);
+    const ctxManager = new ContextManager();
+
+
+    // const ctxManager = new contextManager();
 
     // Same ApolloServer initialization as before, plus the drain plugin
     // for our httpServer.
 
     const schema = makeExecutableSchema({ typeDefs, resolvers });
+
+
+    const getDynamicContext = async (ctx, msg, args) => {
+        // if (ctx.connectionParams.authentication) {
+        //   const currentUser = await findUser(ctx.connectionParams.authentication);
+        //   return { currentUser };
+        // }
+
+        // console.log("SERVER CTX", ctx, args, msg);
+        // Let the resolvers know we don't have a current user so they can
+        // throw the appropriate error
+        return { currentUser: null };
+    };
+
 
     // Creating the WebSocket server
     const wsServer = new WebSocketServer({
@@ -65,15 +85,34 @@ const startServer = async () => {
         server: httpServer,
         // Pass a different path here if app.use
         // serves expressMiddleware at a different path
-        path: '/',
+        clientTracking: true,
+        path: '/subscriptions',
+
     });
 
     // // Hand in the schema we just created and have the
     // WebSocketServer start listening.
-    const serverCleanup = useServer({ schema }, wsServer);
+    const serverCleanup = useServer({
+        schema,
+        context: async (ctx, msg, args) => {
+            // This will be run every time the client sends a subscription request
+            const token = ctx.extra.request.headers.cookie?.split('=')[1];
+            const user = ctxManager.verifyToken(token);
+            return { currentUser: user }
+        },
+        onConnect: (ctx) => {
+            const token = ctx.extra.request.headers.cookie?.split('=')[1];
+            const user = ctxManager.verifyToken(token);
+            if (!user) {
+                console.error("Invalid subscription token");
+                return false;
+            }
+        }
+    }, wsServer);
 
 
     const server = new ApolloServer({
+
         schema,
         plugins: [
             // Proper shutdown for the HTTP server.
@@ -117,6 +156,7 @@ const startServer = async () => {
             origin: true,
             credentials: true,
         }),
+
         // cors(corsOptions),
         // 50mb is the limit that `startStandaloneServer` uses, but you may configure this to suit your needs
         bodyParser.json({ limit: '50mb' }),
@@ -124,36 +164,7 @@ const startServer = async () => {
         // an Apollo Server instance and optional configuration options
         expressMiddleware(server, {
             context: async ({ req, res }) => {
-                // check cookie
-                // const token = req.cookies;
-                // context.initialize(req, res);
-                // const cookies = parseCookies({ req });
-                // console.log("got cookies form contex", cookies);
-
-                // setCookie({ res }, 'session', "roken", {
-                //     httpOnly: true,
-                //     // secure: true, // Enable this if using HTTPS e.g. in production
-                //     path: '/', // The path: '/' means that the cookie will be valid for the entire domain. It will be sent by the client to the server for any URL path within the domain.
-                // });
-
-                // const parsedCookies = parseCookies({ req });
-
-                // // Notice how the response object is passed
-                // setCookie({ res }, 'fromServer', 'value', {
-                //     maxAge: 30 * 24 * 60 * 60,
-                //     path: '/page',
-                // });
-                // console.log('parsedCookiesCont: ', parsedCookies);
-
-
-
-                // return {
-                //     res,
-                //     req,
-                //     setCookie,
-                // }
-
-                return new ContextManager(req, res);
+                return new ContextManager(req);
             },
 
             // context: async ({ req, res }) => {

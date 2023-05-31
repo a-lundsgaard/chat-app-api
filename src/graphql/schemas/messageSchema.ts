@@ -11,7 +11,9 @@ export default gql`
     }
 
     type Mutation {
-        addMessage(user_id: Int!, content: String!, conversation_id: ID!): Message!
+        # addMessage(user_id: Int!, content: String!, conversation_id: ID!, username: String!): Message!
+        addMessage(input: MessageInput!): Message!
+
     }
 
     type Query {
@@ -22,6 +24,14 @@ export default gql`
 
     type Subscription {
         messageCreated: Message
+    }
+
+    input MessageInput {
+        user_id: Int!
+        content: String!
+        conversation_id: ID!
+        username: String!
+        receiver_ids: [Int!]!
     }
 
     # type Subscription {
