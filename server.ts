@@ -23,7 +23,7 @@ const startServer = async () => {
     const app = express();
 
     // health check
-    app.get('/', (req, res) => {
+    app.get('/check', (req, res) => {
         res.sendStatus(200);
     });
 
