@@ -21,6 +21,12 @@ import context, { ContextManager } from './src/graphql/context/index';
 const startServer = async () => {
     // Required logic for integrating with Express
     const app = express();
+
+    // health check
+    app.get('/', (req, res) => {
+        res.sendStatus(200);
+    });
+
     // Our httpServer handles incoming requests to our Express app.
     // Below, we tell Apollo Server to "drain" this httpServer,
     // enabling our servers to shut down gracefully.
@@ -54,8 +60,9 @@ const startServer = async () => {
             const user = ctxManager.verifyToken(token);
             if (!user) {
                 console.error("Invalid subscription token");
-                return false;
+                throw new Error("Invalid subscription token");
             }
+            console.log("SUBSCRIBTION CONNECTED: ", user.username);
         }
     }, wsServer);
 
@@ -108,8 +115,14 @@ const startServer = async () => {
     );
 
     // Modified server startup
-    await new Promise<void>((resolve) => httpServer.listen({ port: 4000 }, resolve));
+    const PORT = process.env.PORT || 4000;
+    await new Promise<void>((resolve) => httpServer.listen({ port: PORT || 4000 }, resolve));
+    // httpServer.listen({ port: PORT }, () => {
+    //     const address = httpServer.address() || "localhost";
+    //     console.log(`🚀 Server ready at ${address}:${PORT}/`);
+    // });
     console.log(`🚀 Server ready at http://localhost:4000/`);
+    // log the server address dynamically
 
 
 };

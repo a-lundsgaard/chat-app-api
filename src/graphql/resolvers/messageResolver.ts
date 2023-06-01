@@ -29,6 +29,7 @@ const messageResolver: Resolvers = {
                 // user?.id != args.user_id &&
                 args.receiver_ids.includes(user?.id as number)
             ) {
+                console.log('publishing messag from ', user?.username);
                 mc.pubsub.publish(MESSAGE_CREATED, {
                     'messageCreated': msg
                 });
