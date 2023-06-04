@@ -31,16 +31,24 @@ const startServer = async () => {
     // Below, we tell Apollo Server to "drain" this httpServer,
     // enabling our servers to shut down gracefully.
     const httpServer = http.createServer(app);
-    const ctxManager = new ContextManager();
+    // const ctxManager = new ContextManager();
+
+    let ctxManager: ContextManager | null = null;
+
     const schema = makeExecutableSchema({ typeDefs, resolvers });
 
     // Creating the WebSocket server
     const wsServer = new WebSocketServer({
         // This is the `httpServer` we created in a previous step.
         server: httpServer,
+
         // Pass a different path here if app.use
         // serves expressMiddleware at a different path
         clientTracking: true,
+        handleProtocols: (protocols, request) => {
+            // Enable credentials for WebSocket connections
+            return 'graphql-transport-ws';
+        },
         path: '/subscriptions',
 
     });
@@ -49,21 +57,25 @@ const startServer = async () => {
     // WebSocketServer start listening.
     const serverCleanup = useServer({
         schema,
-        context: async (ctx, msg, args) => {
-            // This will be run every time the client sends a subscription request
-            const token = ctx.extra.request.headers.cookie?.split('=')[1];
-            const user = ctxManager.verifyToken(token);
-            return { currentUser: user }
+        // context: async (ctx, msg, args) => {
+        //     // This will be run every time the client sends a subscription request
+        //     const token = ctx.extra.request.headers.cookie?.split('=')[1];
+        //     const user = ctxManager.verifyToken(token);
+        //     return { currentUser: user }
+        // },
+        onError: (err) => {
+            console.error("Got subscription error", err);
         },
         onConnect: (ctx) => {
-            const token = ctx.extra.request.headers.cookie?.split('=')[1];
-            const user = ctxManager.verifyToken(token);
-            if (!user) {
-                console.error("Invalid subscription token");
-                throw new Error("Invalid subscription token");
+            console.log("SUBSCRIBTION opened");
+            // const token = ctx.extra.request.headers.cookie?.split('=')[1]
+            // console.log('sub cookie: ', token);
+            if (!ctxManager) {
+                throw new Error("Invalid subscription credentials");
             }
-            console.log("SUBSCRIBTION CONNECTED: ", user.username);
-        }
+            const user = ctxManager.verifyToken();
+            console.log('sub cookie: ', user);
+        },
     }, wsServer);
 
 
@@ -109,7 +121,13 @@ const startServer = async () => {
         // an Apollo Server instance and optional configuration options
         expressMiddleware(server, {
             context: async ({ req, res }) => {
-                return new ContextManager(req);
+                if (!ctxManager) {
+                    ctxManager = new ContextManager(req);
+                } else {
+                    ctxManager.setReq(req);
+                }
+                // return new ContextManager(req);
+                return ctxManager;
             }
         })
     );

@@ -27,16 +27,17 @@ export class ContextManager {
         this.req = req;
     }
 
+    setReq(req: Request) {
+        this.req = req;
+    }
+
     verifyToken(token?: string): UserResponsObject | null {
         try {
             // if (!this.req || !token) throw new Error("from ctx manager Missing token or request object");
-            console.log("Å CTX: ", this.req, token);
             const session = token ? token : (this.req?.headers['auth-token'] || '') as string
             if (!session) throw new JsonWebTokenError("Missing JWT Token");
 
             const { user, key } = jwt.verify(session, this._TOKEN_SECRET!) as JWTData;
-
-            console.log("å user: ", user);
             const isValidKey = bcrypt.compareSync(this._TOKEN_SECRET_VERIFICATION_KEY!, key);
 
             if (!isValidKey) {
