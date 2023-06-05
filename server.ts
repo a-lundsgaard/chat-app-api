@@ -31,9 +31,7 @@ const startServer = async () => {
     // Below, we tell Apollo Server to "drain" this httpServer,
     // enabling our servers to shut down gracefully.
     const httpServer = http.createServer(app);
-    // const ctxManager = new ContextManager();
-
-    let ctxManager: ContextManager | null = null;
+    const ctxManager = new ContextManager();
 
     const schema = makeExecutableSchema({ typeDefs, resolvers });
 
@@ -68,11 +66,6 @@ const startServer = async () => {
         },
         onConnect: (ctx) => {
             console.log("SUBSCRIBTION opened");
-            // const token = ctx.extra.request.headers.cookie?.split('=')[1]
-            // console.log('sub cookie: ', token);
-            if (!ctxManager) {
-                throw new Error("Invalid subscription credentials");
-            }
             const user = ctxManager.verifyToken();
             console.log('sub cookie: ', user);
         },
@@ -121,11 +114,7 @@ const startServer = async () => {
         // an Apollo Server instance and optional configuration options
         expressMiddleware(server, {
             context: async ({ req, res }) => {
-                if (!ctxManager) {
-                    ctxManager = new ContextManager(req);
-                } else {
-                    ctxManager.setReq(req);
-                }
+                ctxManager.setReq(req);
                 // return new ContextManager(req);
                 return ctxManager;
             }
