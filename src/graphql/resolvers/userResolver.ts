@@ -1,12 +1,6 @@
 import UserController from "../../database/controllers/userController"
 import { Resolvers } from "../generated/graphql";
 import bcrypt from 'bcrypt';
-import { setCookie, parseCookies } from 'nookies';
-import { Request } from "express";
-import nookies from 'nookies'
-
-// import { parseCookies, setCookie } from 'nookies';
-
 
 const uc = new UserController();
 
@@ -52,22 +46,13 @@ const userResolver: Resolvers = {
     Query: {
         async getAllUsers(_, args, context) {
             context.authenticate();
-
             return await uc.getAllUsers();
         },
 
         async isMe(_, __, context) {
-
             console.log("Authenticating...")
-            const res = context.authenticate();
-            // const t = context.req.cookies
-            // const cookies = parseCookies(context);
-
-            // const cookies = nookies.get({ req: context.req, })
-
-            // console.log('isme cookies: ', cookies, t);
-
-            return res;
+            const user = context.authenticate();
+            return user;
         }
     },
 }

@@ -6,86 +6,47 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-
-
-
-import { parseCookies, setCookie, } from 'nookies';
-
-
 // sockets
 import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
 import { makeExecutableSchema } from '@graphql-tools/schema';
-
-
 import typeDefs from './src/graphql/schemas/index';
 import resolvers from './src/graphql/resolvers/index';
 import authMiddleware from './src/middleware/auth';
 // import getUser from './src/utils/getUser';
 import { getUser } from './src/middleware/auth';
-import { GraphQLError, subscribe } from 'graphql';
-
 import context, { ContextManager } from './src/graphql/context/index';
-import Cookies from 'cookies';
-
-
-// interface MyContext {
-//     // token?: String;
-// }
-
-// interface MyContext {
-//     auth?: {
-//         user: string;
-//         token: string;
-//     };
-// }
-
-// interface MyContext { signIn: () => string, authenticate: () => boolean }
-
-// const wsLink = new GraphQLWsLink(createClient({
-//     url: 'ws://localhost:4000/subscriptions',
-// }));
-
 
 
 const startServer = async () => {
     // Required logic for integrating with Express
     const app = express();
+
+    // health check
+    app.get('/check', (req, res) => {
+        res.sendStatus(200);
+    });
+
     // Our httpServer handles incoming requests to our Express app.
     // Below, we tell Apollo Server to "drain" this httpServer,
     // enabling our servers to shut down gracefully.
     const httpServer = http.createServer(app);
     const ctxManager = new ContextManager();
 
-
-    // const ctxManager = new contextManager();
-
-    // Same ApolloServer initialization as before, plus the drain plugin
-    // for our httpServer.
-
     const schema = makeExecutableSchema({ typeDefs, resolvers });
-
-
-    const getDynamicContext = async (ctx, msg, args) => {
-        // if (ctx.connectionParams.authentication) {
-        //   const currentUser = await findUser(ctx.connectionParams.authentication);
-        //   return { currentUser };
-        // }
-
-        // console.log("SERVER CTX", ctx, args, msg);
-        // Let the resolvers know we don't have a current user so they can
-        // throw the appropriate error
-        return { currentUser: null };
-    };
-
 
     // Creating the WebSocket server
     const wsServer = new WebSocketServer({
         // This is the `httpServer` we created in a previous step.
         server: httpServer,
+
         // Pass a different path here if app.use
         // serves expressMiddleware at a different path
         clientTracking: true,
+        handleProtocols: (protocols, request) => {
+            // Enable credentials for WebSocket connections
+            return 'graphql-transport-ws';
+        },
         path: '/subscriptions',
 
     });
@@ -94,20 +55,20 @@ const startServer = async () => {
     // WebSocketServer start listening.
     const serverCleanup = useServer({
         schema,
-        context: async (ctx, msg, args) => {
-            // This will be run every time the client sends a subscription request
-            const token = ctx.extra.request.headers.cookie?.split('=')[1];
-            const user = ctxManager.verifyToken(token);
-            return { currentUser: user }
+        // context: async (ctx, msg, args) => {
+        //     // This will be run every time the client sends a subscription request
+        //     const token = ctx.extra.request.headers.cookie?.split('=')[1];
+        //     const user = ctxManager.verifyToken(token);
+        //     return { currentUser: user }
+        // },
+        onError: (err) => {
+            console.error("Got subscription error", err);
         },
         onConnect: (ctx) => {
-            const token = ctx.extra.request.headers.cookie?.split('=')[1];
-            const user = ctxManager.verifyToken(token);
-            if (!user) {
-                console.error("Invalid subscription token");
-                return false;
-            }
-        }
+            console.log("SUBSCRIBTION opened");
+            const user = ctxManager.verifyToken();
+            console.log('sub cookie: ', user);
+        },
     }, wsServer);
 
 
@@ -135,20 +96,9 @@ const startServer = async () => {
     // Ensure we wait for our server to start
     await server.start();
 
-
-
-
-
     // Set up our Express middleware to handle CORS, body parsing,
     // and our expressMiddleware function.
     // app.use(authMiddleware);
-
-    // enable cors
-    var corsOptions = {
-        origin: '<insert uri of front-end domain>',
-        credentials: true // <-- REQUIRED backend setting
-    };
-
     app.use(
         '/',
         // cors<cors.CorsRequest>(),
@@ -164,36 +114,24 @@ const startServer = async () => {
         // an Apollo Server instance and optional configuration options
         expressMiddleware(server, {
             context: async ({ req, res }) => {
-                return new ContextManager(req);
-            },
-
-            // context: async ({ req, res }) => {
-            //     // check cookie
-            //     // const token = req.cookies;
-            //     // context.initialize(req, res);
-            //     // return new ContextManager(req, res);
-
-            //     return {
-            //         cookie: res.cookie,
-            //         // authenticate: ContextManager.verifyToken(req),
-            //     }
-            // }
-
-
-        },
-
-
-
-        ),
+                ctxManager.setReq(req);
+                // return new ContextManager(req);
+                return ctxManager;
+            }
+        })
     );
 
     // Modified server startup
-    await new Promise<void>((resolve) => httpServer.listen({ port: 4000 }, resolve));
+    const PORT = process.env.PORT || 4000;
+    await new Promise<void>((resolve) => httpServer.listen({ port: PORT || 4000 }, resolve));
+    // httpServer.listen({ port: PORT }, () => {
+    //     const address = httpServer.address() || "localhost";
+    //     console.log(`🚀 Server ready at ${address}:${PORT}/`);
+    // });
     console.log(`🚀 Server ready at http://localhost:4000/`);
+    // log the server address dynamically
 
 
 };
-
-
 
 startServer();
