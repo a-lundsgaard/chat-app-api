@@ -3,7 +3,9 @@
   "packageManager": "yarn@3.2.2",
   "scripts": {
     "mac:copy:sql": "cd ./dist/src/database && mkdir -p sql && cd .. && cd .. && cd .. && cp -R ./src/database/sql ./dist/src/database",
-    "dev": "yarn mac:copy:sql && nodemon ./dist/server.js",
+    "win:copy:sql": "cd .\\dist\\src\\database && mkdir sql && cd ..\\..\\.. && copy .\\src\\database\\sql .\\dist\\src\\database\\sql",
+    "dev": "npx tsc && yarn mac:copy:sql && nodemon ./dist/server.js",
+    "dev:win": "npx tsc && yarn win:copy:sql && nodemon ./dist/server.js",
     "dev-concurrent": "concurrently \"yarn dev\" \"npx tsc --watch\"  \"node ./dist/watcher\" -k",
     "create-tables": "node ./dist/src/database/actions/setupdb.js",
     "start": "node dist/server.js",
