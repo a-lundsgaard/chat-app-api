@@ -35,6 +35,8 @@ The project should now be running at `localhost:4000`
 
 The frontend that consumes this API can be found at [chat-app-web](https://github.com/a-lundsgaard/chat-app-web).
 
+## Demo
+
 A live demo of the app can be found [my-chat.herokuapp.com](https://my-chat.herokuapp.com/).
 
 ## ER Diagram
