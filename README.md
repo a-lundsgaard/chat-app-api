@@ -2,31 +2,33 @@
 
 ## Run the project
 
-To run this project you must install node.js (latest recommended)
+To run this project you must install node.js (latest recommended) and npm should come with it. You can also use yarn instead of npm.
+
+If using npm you should remove the `yarn.lock` file.
 
 1. Make sure to have the .env file with the correct variables at the root of the project
 2. Navigate to the root of the project
 3. Install the project dependencies:
 
 ```zsh
-yarn install
+npm install
 ```
 
 4. Run the project and set up the database schemas (if they do not already exist)
 
 ```zsh
-yarn run dev:mac
+npm run dev:mac
 ```
 
 If on Windows, you may need to run the following command instead:
 
 ```zsh
-yarn run dev:win
+npm run dev:win
 ```
 The project should now be running at `localhost:4000`. If not, In the dist folder you will find the compiled version javascript of the project. The sql files to create the database schemas should have been copied to `dist/src/database/sql` by running the project. If not, you can copy them manually from the `src/database/sql` and then run:
 
 ```zsh
-yarn run dev
+npm run dev
 ```
 
 The project should now be running at `localhost:4000`
