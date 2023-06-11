@@ -1,21 +1,44 @@
 # chat-app-dis
 
-1. Open a terminal and navigate to the root directory of your project.
+## Run the project
 
-2. Build the Docker image by running the following command
+To run this project you must install node.js (latest recommended)
 
-```bash
-docker build -t apollo-server-app .
+1. Make sure to have the .env file with the correct variables at the root of the project
+2. Navigate to the root of the project
+3. Install the project dependencies:
+
+```zsh
+yarn install
 ```
 
+4. Run the project and set up the database schemas (if they do not already exist)
 
-3. Run the Docker container using the command below.
-
-```bash
-docker run -p 4000:4000 apollo-server-app
+```zsh
+yarn run dev:mac
 ```
 
-This command maps port 4000 of the container to port 4000 on your local machine and starts the container.
-The Apollo Server app should now be running inside the Docker container, and you can access it at http://localhost:4000.
+If on Windows, you may need to run the following command instead:
 
-Note: Make sure you have Docker installed and running on your machine before following the steps above.
+```zsh
+yarn run dev:win
+```
+The project should now be running at `localhost:4000`. If not, In the dist folder you will find the compiled version javascript of the project. The sql files to create the database schemas should have been copied to `dist/src/database/sql` by running the project. If not, you can copy them manually from the `src/database/sql` and then run:
+
+```zsh
+yarn run dev
+```
+
+The project should now be running at `localhost:4000`
+
+## Frontend
+
+The frontend that consumes this API can be found at [chat-app-web](https://github.com/a-lundsgaard/chat-app-web).
+
+## Demo
+
+A live demo of the app can be found [my-chat.herokuapp.com](https://my-chat.herokuapp.com/). The demo is currently hosted on a Heroku dyno, so it may take a while to load (about 30 seconds).
+
+## ER Diagram
+
+![ER Diagram](./readme_assets/DIS_PROJECT_ER.png)
