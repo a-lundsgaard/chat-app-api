@@ -37,7 +37,7 @@ The frontend that consumes this API can be found at [chat-app-web](https://githu
 
 ## Demo
 
-A live demo of the app can be found [my-chat.herokuapp.com](https://my-chat.herokuapp.com/).
+A live demo of the app can be found [my-chat.herokuapp.com](https://my-chat.herokuapp.com/). The demo is currently hosted on a Heroku dyno, so it may take a while to load.
 
 ## ER Diagram
 
