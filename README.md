@@ -31,4 +31,12 @@ yarn run dev
 
 The project should now be running at `localhost:4000`
 
+## Frontend
+
+The frontend that consumes this API can be found at [chat-app-web](https://github.com/a-lundsgaard/chat-app-web).
+
+A live demo of the app can be found [my-chat.herokuapp.com](https://my-chat.herokuapp.com/).
+
 ## ER Diagram
+
+![ER Diagram](./readme_assets/DIS_PROJECT_ER.png)
